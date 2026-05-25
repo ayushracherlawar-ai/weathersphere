@@ -41,7 +41,7 @@ Built with React, Tailwind CSS, Recharts, Vite and Open-Meteo APIs, this project
     </td>
     <td align="center">
       <img src="./src/assets/weather.png" width="300"/>
-      <br><b>Weather Condition</b>
+      <br><b>Cloudy Weather</b>
     </td>
   </tr>
 
@@ -53,6 +53,12 @@ Built with React, Tailwind CSS, Recharts, Vite and Open-Meteo APIs, this project
     <td align="center">
       <img src="./src/assets/lightmode.png" width="300"/>
       <br><b>Light Mode</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="./src/assets/night.png" width="300"/>
+      <br><b>Night Time</b>
     </td>
   </tr>
 </table>
