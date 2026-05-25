@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .font-display { font-family: 'Outfit', sans-serif; }
+  .font-body    { font-family: 'DM Sans', sans-serif; }
+  .font-mono    { font-family: 'JetBrains Mono', monospace; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+/* ── Keyframes ─────────────────────────────────────────────────────────── */
+@keyframes rain {
+  0%   { transform: translateY(-120px) rotate(10deg); }
+  100% { transform: translateY(110vh)  rotate(10deg); }
+}
+@keyframes snow {
+  0%   { transform: translateY(-20px) translateX(0)   rotate(0deg); }
+  50%  { transform: translateY(50vh)  translateX(30px) rotate(180deg); }
+  100% { transform: translateY(110vh) translateX(-10px) rotate(360deg); }
+}
+@keyframes floatY {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-18px); }
+}
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes bounceY {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+/* ── Animation classes ─────────────────────────────────────────────────── */
+.animate-rain        { animation: rain       var(--dur, 1s)   var(--delay, 0s) linear   infinite; }
+.animate-snow        { animation: snow       var(--dur, 3s)   var(--delay, 0s) linear   infinite; }
+.animate-float       { animation: floatY     3s               ease-in-out      infinite; }
+.animate-pulse-slow  { animation: pulseSlow  var(--dur, 3s)   var(--delay, 0s) ease-in-out infinite; }
+.animate-gradient    { animation: gradientShift 12s           ease             infinite; }
+.animate-slide-up    { animation: slideUp    0.45s            ease             forwards; opacity: 0; }
+.animate-fade-in     { animation: fadeIn     0.3s             ease             forwards; }
+.animate-bounce-dot  { animation: bounceY    1s               ease-in-out      infinite; }
+.animate-spin-loader { animation: spin       0.8s             linear           infinite; }
