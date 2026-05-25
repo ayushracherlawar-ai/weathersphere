@@ -4,8 +4,8 @@ export const formatTemp = (temp, unit) =>
   unit === "F" ? `${celsiusToFahrenheit(temp)}°F` : `${Math.round(temp)}°C`;
 
 // ── Time ─────────────────────────────────────────────────────────────────────
-export const formatHour = (dtStr) => {
-  const d = new Date(dtStr);
+export const formatHour = (dt) => {
+  const d = typeof dt === "number" ? new Date(dt * 1000) : new Date(dt);
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 

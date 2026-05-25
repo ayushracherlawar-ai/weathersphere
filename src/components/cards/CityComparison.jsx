@@ -38,51 +38,53 @@ export default function CityComparison({ darkMode = true }) {
   }
 
   return (
-    <div className={`backdrop-blur-md border rounded-3xl p-4 transition-colors duration-500 ${card}`}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <GitCompare className={`w-4 h-4 ${hd}`} />
-          <h3 className={`text-xs font-body uppercase tracking-wider ${hd}`}>City Comparison</h3>
-        </div>
-        <button onClick={clear}
-          className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all
-            ${darkMode ? "bg-white/10 hover:bg-white/20" : "bg-black/10 hover:bg-black/20"}`}>
-          <X className={`w-3 h-3 ${hd}`} />
-        </button>
-      </div>
-
-      {!compareWeather ? (
-        <form onSubmit={submit} className="flex gap-2">
-          <input value={input} onChange={(e) => setInput(e.target.value)}
-            placeholder="Enter city name…"
-            className={`flex-1 border rounded-xl px-3 py-2 text-sm font-body outline-none transition-colors ${inp}`} />
-          <button type="submit" className={`px-3 py-2 rounded-xl text-sm font-display transition-all ${btnCmp}`}>
-            Go
+    <div className="animate-slide-up">
+      <div className={`backdrop-blur-md border rounded-3xl p-4 transition-colors duration-500 ${card}`}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <GitCompare className={`w-4 h-4 ${hd}`} />
+            <h3 className={`text-xs font-body uppercase tracking-wider ${hd}`}>City Comparison</h3>
+          </div>
+          <button onClick={clear}
+            className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all
+              ${darkMode ? "bg-white/10 hover:bg-white/20" : "bg-black/10 hover:bg-black/20"}`}>
+            <X className={`w-3 h-3 ${hd}`} />
           </button>
-        </form>
-      ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {[weather, compareWeather].map((w, i) => {
-            if (!w) return null;
-            return (
-              <div key={i} className={`${inner} rounded-2xl p-3 text-center`}>
-                <p className={`text-xs font-body mb-2 ${ts}`}>{w.name}{w.sys?.country ? `, ${w.sys.country}` : ""}</p>
-                <WeatherIcon icon={w.weather[0].icon} size="text-3xl" />
-                <p className={`font-display font-bold text-2xl mt-1 ${tp}`}>{formatTemp(w.main.temp, unit)}</p>
-                <p className={`text-xs font-body capitalize mt-0.5 ${ts}`}>{w.weather[0].description}</p>
-                <div className="grid grid-cols-2 gap-1 mt-2">
-                  {[["Humidity", `${w.main.humidity}%`], ["Wind", `${Math.round((w.wind?.speed ?? 0) * 3.6)} km/h`]].map(([k, v]) => (
-                    <div key={k} className={`${inner} rounded-lg p-1.5`}>
-                      <p className={`text-xs ${tm}`}>{k}</p>
-                      <p className={`text-xs font-semibold font-display ${tp}`}>{v}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
         </div>
-      )}
+
+        {!compareWeather ? (
+          <form onSubmit={submit} className="flex gap-2">
+            <input value={input} onChange={(e) => setInput(e.target.value)}
+              placeholder="Enter city name…"
+              className={`flex-1 border rounded-xl px-3 py-2 text-sm font-body outline-none transition-colors ${inp}`} />
+            <button type="submit" className={`px-3 py-2 rounded-xl text-sm font-display transition-all ${btnCmp}`}>
+              Go
+            </button>
+          </form>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {[weather, compareWeather].map((w, i) => {
+              if (!w) return null;
+              return (
+                <div key={i} className={`${inner} rounded-2xl p-3 text-center`}>
+                  <p className={`text-xs font-body mb-2 ${ts}`}>{w.name}{w.sys?.country ? `, ${w.sys.country}` : ""}</p>
+                  <WeatherIcon icon={w.weather[0].icon} size="text-3xl" />
+                  <p className={`font-display font-bold text-2xl mt-1 ${tp}`}>{formatTemp(w.main.temp, unit)}</p>
+                  <p className={`text-xs font-body capitalize mt-0.5 ${ts}`}>{w.weather[0].description}</p>
+                  <div className="grid grid-cols-2 gap-1 mt-2">
+                    {[["Humidity", `${w.main.humidity}%`], ["Wind", `${Math.round((w.wind?.speed ?? 0) * 3.6)} km/h`]].map(([k, v]) => (
+                      <div key={k} className={`${inner} rounded-lg p-1.5`}>
+                        <p className={`text-xs ${tm}`}>{k}</p>
+                        <p className={`text-xs font-semibold font-display ${tp}`}>{v}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

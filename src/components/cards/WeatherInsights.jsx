@@ -24,18 +24,20 @@ export default function WeatherInsights({ darkMode = true }) {
   const styles = darkMode ? TYPE : TYPE_LIGHT;
 
   return (
-    <div className={`backdrop-blur-md border rounded-3xl p-4 transition-colors duration-500 ${card}`}>
-      <h3 className={`text-xs font-body uppercase tracking-wider mb-3 ${hd}`}>🧠 Weather Insights</h3>
-      <div className="space-y-2">
-        {insights.map((it, i) => (
-          <div key={i}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border text-sm font-body animate-slide-up
-              ${styles[it.type] ?? styles.info}`}
-            style={{ animationDelay: `${i * 0.08}s` }}>
-            <span className="text-base flex-shrink-0">{it.icon}</span>
-            <span>{it.text}</span>
-          </div>
-        ))}
+    <div className="animate-slide-up">
+      <div className={`backdrop-blur-md border rounded-3xl p-4 transition-colors duration-500 ${card}`}>
+        <h3 className={`text-xs font-body uppercase tracking-wider mb-3 ${hd}`}>🧠 Weather Insights</h3>
+        <div className="space-y-2">
+          {insights.map((it, i) => (
+            <div key={i}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border text-sm font-body animate-slide-up
+                ${styles[it.type] ?? styles.info}`}
+              style={{ animationDelay: `${i * 0.08}s` }}>
+              <span className="text-base flex-shrink-0">{it.icon}</span>
+              <span>{it.text}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

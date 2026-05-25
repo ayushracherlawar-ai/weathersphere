@@ -54,16 +54,46 @@ export function WeatherProvider({ children }) {
   const [compareWeather,  setCompareWeather]  = useState(null);
   const [compareForecast, setCompareForecast] = useState(null);
 
+  // ── Offline: restore last-known data on mount ────────────────────────────
+  useEffect(() => {
+    const cached = lsGet("lastWeather", null);
+    const cachedF = lsGet("lastForecast", null);
+    const cachedA = lsGet("lastAqi", null);
+    if (cached)  setWeather(cached);
+    if (cachedF) setForecast(cachedF);
+    if (cachedA) setAqi(cachedA);
+  }, []);
+
   // ── Core data loader ─────────────────────────────────────────────────────
   const _load = useCallback(async (wPromise, fPromise, cityName) => {
     setLoading(true);
     setError(null);
+
+    // If offline, show cached data immediately and bail
+    if (!navigator.onLine) {
+      const cached = lsGet("lastWeather", null);
+      if (cached) {
+        setWeather(lsGet("lastWeather", null));
+        setForecast(lsGet("lastForecast", null));
+        setAqi(lsGet("lastAqi", null));
+        setError("⚠️ You're offline — showing last cached weather for " + (lsGet("lastWeather", null)?.name ?? "unknown"));
+      } else {
+        setError("⚠️ You're offline and no cached data is available yet.");
+      }
+      setLoading(false);
+      return;
+    }
+
     try {
       const [w, f] = await Promise.all([wPromise, fPromise]);
       setWeather(w);
       setForecast(f);
+      // Persist to localStorage for offline use
+      lsSet("lastWeather", w);
+      lsSet("lastForecast", f);
       const aqiData = await fetchAQI(w.coord.lat, w.coord.lon);
       setAqi(aqiData);
+      lsSet("lastAqi", aqiData);
       if (cityName) {
         setRecentSearches((prev) => {
           const next = [cityName, ...prev.filter((c) => c.toLowerCase() !== cityName.toLowerCase())].slice(0, 8);
@@ -72,7 +102,16 @@ export function WeatherProvider({ children }) {
         });
       }
     } catch {
-      setError("Could not load weather data — showing demo data.");
+      // Network failed — fall back to cache silently
+      const cached = lsGet("lastWeather", null);
+      if (cached) {
+        setWeather(lsGet("lastWeather", null));
+        setForecast(lsGet("lastForecast", null));
+        setAqi(lsGet("lastAqi", null));
+        setError("⚠️ Could not refresh — showing last cached weather for " + cached.name);
+      } else {
+        setError("⚠️ Could not load weather data. Check your connection.");
+      }
     } finally {
       setLoading(false);
     }

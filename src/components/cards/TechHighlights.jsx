@@ -25,33 +25,35 @@ export default function TechHighlights({ darkMode = true }) {
   const ts    = darkMode ? "text-white/50" : "text-gray-500";
 
   return (
-    <div className={`backdrop-blur-md border rounded-3xl overflow-hidden transition-colors duration-500 ${wrap}`}>
-      <button onClick={() => setOpen((o) => !o)}
-        className={`w-full flex items-center justify-between px-4 py-3 hover:${darkMode ? "bg-white/5" : "bg-black/5"} transition-colors`}>
-        <div className="flex items-center gap-2">
-          <Code2 className={`w-4 h-4 ${hd}`} />
-          <span className={`text-xs font-body uppercase tracking-wider ${hd}`}>Tech Highlights</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${badge}`}>{ITEMS.length} features</span>
-        </div>
-        {open
-          ? <ChevronUp   className={`w-4 h-4 ${hd}`} />
-          : <ChevronDown className={`w-4 h-4 ${hd}`} />
-        }
-      </button>
+    <div className="animate-slide-up">
+      <div className={`backdrop-blur-md border rounded-3xl overflow-hidden transition-colors duration-500 ${wrap}`}>
+        <button onClick={() => setOpen((o) => !o)}
+          className={`w-full flex items-center justify-between px-4 py-3 hover:${darkMode ? "bg-white/5" : "bg-black/5"} transition-colors`}>
+          <div className="flex items-center gap-2">
+            <Code2 className={`w-4 h-4 ${hd}`} />
+            <span className={`text-xs font-body uppercase tracking-wider ${hd}`}>Tech Highlights</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${badge}`}>{ITEMS.length} features</span>
+          </div>
+          {open
+            ? <ChevronUp   className={`w-4 h-4 ${hd}`} />
+            : <ChevronDown className={`w-4 h-4 ${hd}`} />
+          }
+        </button>
 
-      {open && (
-        <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-2 animate-fade-in">
-          {ITEMS.map((h) => (
-            <div key={h.title} className={`flex gap-3 p-3 ${item} rounded-xl`}>
-              <span className="text-lg flex-shrink-0">{h.icon}</span>
-              <div>
-                <p className={`text-sm font-display font-semibold ${tp}`}>{h.title}</p>
-                <p className={`text-xs font-body mt-0.5 leading-relaxed ${ts}`}>{h.desc}</p>
+        {open && (
+          <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-2 animate-fade-in">
+            {ITEMS.map((h) => (
+              <div key={h.title} className={`flex gap-3 p-3 ${item} rounded-xl`}>
+                <span className="text-lg flex-shrink-0">{h.icon}</span>
+                <div>
+                  <p className={`text-sm font-display font-semibold ${tp}`}>{h.title}</p>
+                  <p className={`text-xs font-body mt-0.5 leading-relaxed ${ts}`}>{h.desc}</p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

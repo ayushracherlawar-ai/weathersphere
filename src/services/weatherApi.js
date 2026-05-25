@@ -1,12 +1,12 @@
 import axios from "axios";
 
-// ── Open-Meteo — 100% free, no API key ──────────────────────────────────────
-const METEO_URL   = "https://api.open-meteo.com/v1/forecast";
-const AQI_URL     = "https://air-quality-api.open-meteo.com/v1/air-quality";
-const GEO_URL     = "https://geocoding-api.open-meteo.com/v1/search";
-const NOMINATIM   = "https://nominatim.openstreetmap.org/reverse";
+// ── Open-Meteo — 100% free, no API key required ──────────────────────────────
+const METEO_URL = "https://api.open-meteo.com/v1/forecast";
+const AQI_URL   = "https://air-quality-api.open-meteo.com/v1/air-quality";
+const GEO_URL   = "https://geocoding-api.open-meteo.com/v1/search";
+const NOMINATIM = "https://nominatim.openstreetmap.org/reverse";
 
-// WMO code → human description + icon code (matching OWM icon naming)
+// ── WMO weather code → description + icon base ───────────────────────────────
 const WMO = {
   0:  { desc: "Clear sky",            icon: "01" },
   1:  { desc: "Mainly clear",         icon: "01" },
@@ -34,34 +34,55 @@ const WMO = {
   99: { desc: "Heavy thunderstorm",   icon: "11" },
 };
 
-// WMO → approximate OWM weather ID (used for theme selection)
+// ── WMO code → OWM-style weather ID (drives theme colours) ───────────────────
 const wmoToId = (code) => {
-  if (code <= 1)             return 800;
-  if (code === 2)            return 801;
-  if (code === 3)            return 804;
-  if (code === 45 || code === 48) return 741;
-  if (code >= 51 && code <= 55)   return 300;
-  if (code >= 61 && code <= 65)   return 500;
-  if (code >= 71 && code <= 77)   return 601;
-  if (code >= 80 && code <= 82)   return 520;
-  if (code >= 85 && code <= 86)   return 620;
-  if (code >= 95)            return 200;
+  if (code <= 1)                    return 800; // clear
+  if (code === 2)                   return 801; // few clouds
+  if (code === 3)                   return 804; // overcast
+  if (code === 45 || code === 48)   return 741; // fog
+  if (code >= 51 && code <= 55)     return 300; // drizzle
+  if (code >= 61 && code <= 65)     return 500; // rain
+  if (code >= 71 && code <= 77)     return 601; // snow
+  if (code >= 80 && code <= 82)     return 520; // showers
+  if (code >= 85 && code <= 86)     return 620; // snow showers
+  if (code >= 95)                   return 200; // thunderstorm
   return 800;
 };
 
+// Returns full icon code e.g. "01d" or "10n"
 const wmoIcon = (code, isDay) => {
   const base = (WMO[code] ?? WMO[0]).icon;
   return `${base}${isDay ? "d" : "n"}`;
 };
 
-// ── Geocoding ────────────────────────────────────────────────────────────────
+// ── Safe unix-timestamp → Date (avoids browser timezone parsing differences) ──
+// Open-Meteo returns ISO strings like "2025-05-25T14:00" WITHOUT a timezone
+// suffix. Passing that directly to new Date() is treated as LOCAL time in
+// Firefox/Safari but UTC in some Node/Chrome versions — causing hour shifts.
+// Instead we always work from the unix `dt` field which is always UTC-based,
+// and we convert to local time only at display time (in helpers.js formatHour).
+const isoToUnix = (isoStr) => {
+  // "2025-05-25T14:00" → treat as local time by appending no suffix,
+  // but use a manual parse to guarantee local interpretation everywhere.
+  const [datePart, timePart] = isoStr.split("T");
+  const [y, mo, d]  = datePart.split("-").map(Number);
+  const [h, mi]     = (timePart ?? "00:00").split(":").map(Number);
+  return Math.floor(new Date(y, mo - 1, d, h, mi, 0).getTime() / 1000);
+};
+
+// ── Geocoding: city name → list of results ───────────────────────────────────
 export async function geocodeCity(city) {
-  const res = await axios.get(GEO_URL, {
-    params: { name: city, count: 5, language: "en", format: "json" },
-  });
-  return res.data?.results ?? [];
+  try {
+    const res = await axios.get(GEO_URL, {
+      params: { name: city, count: 6, language: "en", format: "json" },
+    });
+    return res.data?.results ?? [];
+  } catch {
+    return [];
+  }
 }
 
+// ── Reverse geocode: lat/lon → city name ─────────────────────────────────────
 async function reverseGeocode(lat, lon) {
   try {
     const res = await axios.get(NOMINATIM, {
@@ -78,52 +99,53 @@ async function reverseGeocode(lat, lon) {
   }
 }
 
-// ── Core Open-Meteo fetch ─────────────────────────────────────────────────────
+// ── Core fetch from Open-Meteo ────────────────────────────────────────────────
 async function fetchFromMeteo(lat, lon, cityName, country) {
   const res = await axios.get(METEO_URL, {
     params: {
       latitude:  lat,
       longitude: lon,
       current: [
-        "temperature_2m","apparent_temperature","relative_humidity_2m",
-        "precipitation","weather_code","surface_pressure",
-        "wind_speed_10m","wind_direction_10m","visibility","cloud_cover","is_day",
+        "temperature_2m", "apparent_temperature", "relative_humidity_2m",
+        "precipitation", "weather_code", "surface_pressure",
+        "wind_speed_10m", "wind_direction_10m", "visibility", "cloud_cover", "is_day",
       ].join(","),
       hourly: [
-        "temperature_2m","apparent_temperature",
-        "precipitation_probability","weather_code","wind_speed_10m","visibility",
+        "temperature_2m", "apparent_temperature",
+        "precipitation_probability", "weather_code", "wind_speed_10m", "visibility",
       ].join(","),
       daily: [
-        "weather_code","temperature_2m_max","temperature_2m_min",
-        "sunrise","sunset","precipitation_probability_max","wind_speed_10m_max",
+        "weather_code", "temperature_2m_max", "temperature_2m_min",
+        "sunrise", "sunset", "precipitation_probability_max", "wind_speed_10m_max",
       ].join(","),
-      timezone:     "auto",
-      forecast_days: 7,
+      timezone:      "auto",  // returns data in the location's local timezone
+      forecast_days: 7,       // 7 days so grouping by day always gives 5 full days
     },
   });
   return normalise(res.data, cityName, country);
 }
 
-// ── Normalise into the shape the UI consumes ─────────────────────────────────
+// ── Normalise Open-Meteo response → shape the UI expects ─────────────────────
 function normalise(raw, cityName, country) {
-  const c      = raw.current;
-  const isDay  = c.is_day !== 0;
-  const code   = c.weather_code;
-  const desc   = (WMO[code] ?? WMO[0]).desc;
+  const c     = raw.current;
+  const isDay = c.is_day !== 0;
+  const code  = c.weather_code;
+  const desc  = (WMO[code] ?? WMO[0]).desc;
 
-  // Parse sunrise/sunset timestamps from first daily ISO string
+  // Sunrise / sunset — Open-Meteo returns local ISO strings e.g. "2025-05-25T05:43"
+  // Use isoToUnix so they are interpreted as LOCAL time, not UTC
   const sunriseTs = raw.daily?.sunrise?.[0]
-    ? Math.floor(new Date(raw.daily.sunrise[0]).getTime() / 1000)
+    ? isoToUnix(raw.daily.sunrise[0])
     : Math.floor(Date.now() / 1000) - 21600;
   const sunsetTs = raw.daily?.sunset?.[0]
-    ? Math.floor(new Date(raw.daily.sunset[0]).getTime() / 1000)
+    ? isoToUnix(raw.daily.sunset[0])
     : Math.floor(Date.now() / 1000) + 21600;
 
-  // Build normalised weather object
+  // Current weather object
   const weather = {
-    name:   cityName,
-    sys:    { country, sunrise: sunriseTs, sunset: sunsetTs },
-    coord:  { lat: raw.latitude, lon: raw.longitude },
+    name:  cityName,
+    sys:   { country, sunrise: sunriseTs, sunset: sunsetTs },
+    coord: { lat: raw.latitude, lon: raw.longitude },
     main: {
       temp:       c.temperature_2m,
       feels_like: c.apparent_temperature,
@@ -132,34 +154,44 @@ function normalise(raw, cityName, country) {
       temp_min:   raw.daily?.temperature_2m_min?.[0] ?? c.temperature_2m - 2,
       temp_max:   raw.daily?.temperature_2m_max?.[0] ?? c.temperature_2m + 2,
     },
-    wind:      { speed: (c.wind_speed_10m ?? 0) / 3.6, deg: c.wind_direction_10m ?? 0 },
-    visibility: c.visibility ?? 10000,
-    clouds:    { all: c.cloud_cover ?? 0 },
-    weather:   [{ id: wmoToId(code), main: desc, description: desc.toLowerCase(), icon: wmoIcon(code, isDay) }],
-    timezone:  0,
+    wind:       { speed: (c.wind_speed_10m ?? 0) / 3.6, deg: c.wind_direction_10m ?? 0 },
+    visibility:  c.visibility ?? 10000,
+    clouds:     { all: c.cloud_cover ?? 0 },
+    weather:    [{ id: wmoToId(code), main: desc, description: desc.toLowerCase(), icon: wmoIcon(code, isDay) }],
+    timezone:   0,
     isDay,
   };
 
-  // Build hourly forecast list (next 40 slots ≈ OWM style)
-  const list = (raw.hourly?.time ?? []).slice(0, 1200).map((t, i) => {
+  // ── Hourly list: take 120 slots = 5 full days of hourly data ─────────────
+  // FIX: was slice(0, 40) which only covered ~1.5 days
+  // FIX: use isoToUnix() for dt so times are always correct local time
+  const list = (raw.hourly?.time ?? []).slice(0, 120).map((t, i) => {
     const hCode  = raw.hourly.weather_code?.[i] ?? 0;
-    const hIsDay = new Date(t).getHours() >= 6 && new Date(t).getHours() < 20;
+    const hUnix  = isoToUnix(t); // ← correct local-time unix timestamp
+    const hHour  = new Date(hUnix * 1000).getHours();
+    const hIsDay = hHour >= 6 && hHour < 20;
     const hDesc  = (WMO[hCode] ?? WMO[0]).desc;
+
     return {
-      dt:     Math.floor(new Date(t).getTime() / 1000),
-      dt_txt: t.replace("T", " "),
+      dt:     hUnix,
+      dt_txt: t.replace("T", " "), // kept for groupForecastByDay date splitting
       main: {
-        temp:       raw.hourly.temperature_2m?.[i]       ?? c.temperature_2m,
-        feels_like: raw.hourly.apparent_temperature?.[i] ?? c.apparent_temperature,
+        temp:       raw.hourly.temperature_2m?.[i]        ?? c.temperature_2m,
+        feels_like: raw.hourly.apparent_temperature?.[i]  ?? c.apparent_temperature,
         humidity:   c.relative_humidity_2m,
         pressure:   Math.round(c.surface_pressure),
-        temp_min:   (raw.hourly.temperature_2m?.[i] ?? c.temperature_2m) - 1,
-        temp_max:   (raw.hourly.temperature_2m?.[i] ?? c.temperature_2m) + 1,
+        temp_min:   (raw.hourly.temperature_2m?.[i]       ?? c.temperature_2m) - 1,
+        temp_max:   (raw.hourly.temperature_2m?.[i]       ?? c.temperature_2m) + 1,
       },
-      weather: [{ id: wmoToId(hCode), main: hDesc, description: hDesc.toLowerCase(), icon: wmoIcon(hCode, hIsDay) }],
-      wind:   { speed: (raw.hourly.wind_speed_10m?.[i] ?? 0) / 3.6, deg: c.wind_direction_10m ?? 0 },
-      visibility: raw.hourly.visibility?.[i] ?? 10000,
-      pop:   (raw.hourly.precipitation_probability?.[i] ?? 0) / 100,
+      weather: [{
+        id:          wmoToId(hCode),
+        main:        hDesc,
+        description: hDesc.toLowerCase(),
+        icon:        wmoIcon(hCode, hIsDay),
+      }],
+      wind:       { speed: (raw.hourly.wind_speed_10m?.[i] ?? 0) / 3.6, deg: c.wind_direction_10m ?? 0 },
+      visibility:  raw.hourly.visibility?.[i] ?? 10000,
+      pop:        (raw.hourly.precipitation_probability?.[i] ?? 0) / 100,
     };
   });
 
@@ -171,26 +203,34 @@ function normalise(raw, cityName, country) {
   return { weather, forecast };
 }
 
-// ── AQI via Open-Meteo ────────────────────────────────────────────────────────
+// ── AQI via Open-Meteo Air Quality API ───────────────────────────────────────
 export async function fetchAQI(lat, lon) {
   try {
     const res = await axios.get(AQI_URL, {
       params: {
         latitude:  lat,
         longitude: lon,
-        current: ["pm10","pm2_5","carbon_monoxide","nitrogen_dioxide","ozone","european_aqi"].join(","),
+        current: [
+          "pm10", "pm2_5", "carbon_monoxide",
+          "nitrogen_dioxide", "ozone", "european_aqi",
+        ].join(","),
       },
     });
-    const cur = res.data?.current ?? {};
+    const cur    = res.data?.current ?? {};
     const rawAqi = cur.european_aqi ?? 30;
-    const band   = rawAqi <= 20 ? 1 : rawAqi <= 40 ? 2 : rawAqi <= 60 ? 3 : rawAqi <= 80 ? 4 : 5;
+    // Map European AQI (0–500+) to 1–5 band used by the UI
+    const band   = rawAqi <= 20 ? 1
+                 : rawAqi <= 40 ? 2
+                 : rawAqi <= 60 ? 3
+                 : rawAqi <= 80 ? 4
+                 : 5;
     return {
       list: [{
         main: { aqi: band },
         components: {
-          pm2_5: cur.pm2_5          ?? 0,
-          pm10:  cur.pm10           ?? 0,
-          o3:    cur.ozone          ?? 0,
+          pm2_5: cur.pm2_5            ?? 0,
+          pm10:  cur.pm10             ?? 0,
+          o3:    cur.ozone            ?? 0,
           no2:   cur.nitrogen_dioxide ?? 0,
           co:    cur.carbon_monoxide  ?? 0,
           so2: 0, nh3: 0, no: 0,
@@ -202,12 +242,14 @@ export async function fetchAQI(lat, lon) {
   }
 }
 
-// ── Public API ────────────────────────────────────────────────────────────────
+// ── Public weather fetchers ───────────────────────────────────────────────────
 export async function fetchWeatherByCity(city) {
   const results = await geocodeCity(city);
   if (!results.length) throw new Error(`City not found: ${city}`);
   const { latitude, longitude, name, country_code } = results[0];
-  const { weather } = await fetchFromMeteo(latitude, longitude, name, (country_code ?? "").toUpperCase());
+  const { weather } = await fetchFromMeteo(
+    latitude, longitude, name, (country_code ?? "").toUpperCase()
+  );
   return weather;
 }
 
@@ -215,7 +257,9 @@ export async function fetchForecastByCity(city) {
   const results = await geocodeCity(city);
   if (!results.length) throw new Error(`City not found: ${city}`);
   const { latitude, longitude, name, country_code } = results[0];
-  const { forecast } = await fetchFromMeteo(latitude, longitude, name, (country_code ?? "").toUpperCase());
+  const { forecast } = await fetchFromMeteo(
+    latitude, longitude, name, (country_code ?? "").toUpperCase()
+  );
   return forecast;
 }
 
@@ -231,42 +275,49 @@ export async function fetchForecastByCoords(lat, lon) {
   return forecast;
 }
 
-// ── Fallback demo data ────────────────────────────────────────────────────────
+// ── Fallback demo data (shown when all API calls fail) ────────────────────────
 const makeFallbackHours = () =>
-  Array.from({ length: 40 }, (_, i) => ({
-    dt:     Math.floor(Date.now() / 1000) + i * 10800,
-    dt_txt: new Date(Date.now() + i * 10800000).toISOString().replace("T", " ").slice(0, 19),
-    main: {
-      temp:       14 + Math.sin(i * 0.5) * 5,
-      feels_like: 12 + Math.sin(i * 0.5) * 4,
-      humidity:   65,
-      pressure:   1013,
-      temp_min:   11,
-      temp_max:   18,
-    },
-    weather: [
-      i % 10 < 3
-        ? { id: 500, main: "Rain",   description: "light rain",  icon: "10d" }
-        : i % 10 < 6
-        ? { id: 801, main: "Clouds", description: "few clouds",  icon: "02d" }
-        : { id: 800, main: "Clear",  description: "clear sky",   icon: "01d" },
-    ],
-    wind: { speed: 3 + Math.random() * 4, deg: 240 },
-    visibility: 9000,
-    pop: i % 10 < 3 ? 0.6 : 0.05,
-  }));
+  Array.from({ length: 120 }, (_, i) => {
+    const ts = Math.floor(Date.now() / 1000) + i * 3600;
+    return {
+      dt:     ts,
+      dt_txt: new Date(ts * 1000).toISOString().replace("T", " ").slice(0, 19),
+      main: {
+        temp:       14 + Math.sin(i * 0.26) * 5,
+        feels_like: 12 + Math.sin(i * 0.26) * 4,
+        humidity:   65,
+        pressure:   1013,
+        temp_min:   11,
+        temp_max:   18,
+      },
+      weather: [
+        i % 10 < 3
+          ? { id: 500, main: "Rain",   description: "light rain", icon: "10d" }
+          : i % 10 < 6
+          ? { id: 801, main: "Clouds", description: "few clouds", icon: "02d" }
+          : { id: 800, main: "Clear",  description: "clear sky",  icon: "01d" },
+      ],
+      wind:       { speed: 3 + Math.random() * 4, deg: 240 },
+      visibility:  9000,
+      pop:         i % 10 < 3 ? 0.6 : 0.05,
+    };
+  });
 
 export const FALLBACK_WEATHER = {
-  name:   "London",
-  sys:    { country: "GB", sunrise: Math.floor(Date.now() / 1000) - 21600, sunset: Math.floor(Date.now() / 1000) + 21600 },
-  coord:  { lat: 51.5074, lon: -0.1278 },
-  main:   { temp: 14, feels_like: 12, humidity: 72, pressure: 1015, temp_min: 10, temp_max: 17 },
-  wind:   { speed: 4.1, deg: 240 },
-  visibility: 9000,
-  clouds: { all: 30 },
-  weather:[{ id: 801, main: "Partly cloudy", description: "partly cloudy", icon: "02d" }],
-  timezone: 0,
-  isDay: true,
+  name:  "London",
+  sys: {
+    country: "GB",
+    sunrise: Math.floor(Date.now() / 1000) - 21600,
+    sunset:  Math.floor(Date.now() / 1000) + 21600,
+  },
+  coord:      { lat: 51.5074, lon: -0.1278 },
+  main:       { temp: 14, feels_like: 12, humidity: 72, pressure: 1015, temp_min: 10, temp_max: 17 },
+  wind:       { speed: 4.1, deg: 240 },
+  visibility:  9000,
+  clouds:     { all: 30 },
+  weather:    [{ id: 801, main: "Partly cloudy", description: "partly cloudy", icon: "02d" }],
+  timezone:    0,
+  isDay:       true,
 };
 
 export const FALLBACK_FORECAST = {

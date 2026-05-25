@@ -20,7 +20,7 @@ export default function WeatherChart({ darkMode = true }) {
   const { forecast, unit } = useWeather();
   if (!forecast?.list?.length) return null;
 
-  const data = forecast.list.slice(0, 16).map((item) => ({
+  const data = forecast.list.slice(0, 24).map((item) => ({
     time:   formatHour(item.dt_txt),
     temp:   Math.round(item.main.temp),
     feels:  Math.round(item.main.feels_like),
@@ -33,41 +33,43 @@ export default function WeatherChart({ darkMode = true }) {
   const legend = darkMode ? "text-white/40" : "text-gray-400";
 
   return (
-    <div className={`backdrop-blur-md border rounded-3xl p-4 transition-colors duration-500 ${card}`}>
-      <h3 className={`text-xs font-body uppercase tracking-wider mb-4 ${hd}`}>Temperature Trend</h3>
-      <div style={{ height: 180 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 8, left: -22, bottom: 0 }}>
-            <defs>
-              <linearGradient id="gTemp" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor="#fbbf24" stopOpacity={0.45} />
-                <stop offset="95%" stopColor="#fbbf24" stopOpacity={0}    />
-              </linearGradient>
-              <linearGradient id="gFeels" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor="#60a5fa" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="#60a5fa" stopOpacity={0}    />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={grid} />
-            <XAxis dataKey="time" tick={{ fill: tick, fontSize: 10, fontFamily: "DM Sans" }}
-              axisLine={false} tickLine={false} interval={2} />
-            <YAxis tick={{ fill: tick, fontSize: 10, fontFamily: "DM Sans" }}
-              axisLine={false} tickLine={false} tickFormatter={(v) => `${Math.round(v)}°`} />
-            <Tooltip content={<CustomTooltip unit={unit} darkMode={darkMode} />} />
-            <Area type="monotone" dataKey="temp"  stroke="#fbbf24" strokeWidth={2}
-              fill="url(#gTemp)"  dot={false} activeDot={{ r: 4, fill: "#fbbf24" }} animationDuration={700} />
-            <Area type="monotone" dataKey="feels" stroke="#60a5fa" strokeWidth={1.5}
-              strokeDasharray="4 2" fill="url(#gFeels)" dot={false} activeDot={{ r: 3, fill: "#60a5fa" }} animationDuration={700} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-      <div className={`flex gap-4 mt-2 ${legend}`}>
-        <span className="flex items-center gap-1.5 text-xs font-body">
-          <span className="w-3 h-0.5 bg-yellow-400 rounded inline-block" /> Temperature
-        </span>
-        <span className="flex items-center gap-1.5 text-xs font-body">
-          <span className="w-3 h-0.5 bg-blue-400 rounded inline-block" /> Feels Like
-        </span>
+    <div className="animate-slide-up">
+      <div className={`backdrop-blur-md border rounded-3xl p-4 transition-colors duration-500 ${card}`}>
+        <h3 className={`text-xs font-body uppercase tracking-wider mb-4 ${hd}`}>Temperature Trend</h3>
+        <div style={{ height: 180 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 10, right: 8, left: -22, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gTemp" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#fbbf24" stopOpacity={0.45} />
+                  <stop offset="95%" stopColor="#fbbf24" stopOpacity={0}    />
+                </linearGradient>
+                <linearGradient id="gFeels" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#60a5fa" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#60a5fa" stopOpacity={0}    />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={grid} />
+              <XAxis dataKey="time" tick={{ fill: tick, fontSize: 10, fontFamily: "DM Sans" }}
+                axisLine={false} tickLine={false} interval={2} />
+              <YAxis tick={{ fill: tick, fontSize: 10, fontFamily: "DM Sans" }}
+                axisLine={false} tickLine={false} tickFormatter={(v) => `${Math.round(v)}°`} />
+              <Tooltip content={<CustomTooltip unit={unit} darkMode={darkMode} />} />
+              <Area type="monotone" dataKey="temp"  stroke="#fbbf24" strokeWidth={2}
+                fill="url(#gTemp)"  dot={false} activeDot={{ r: 4, fill: "#fbbf24" }} animationDuration={700} />
+              <Area type="monotone" dataKey="feels" stroke="#60a5fa" strokeWidth={1.5}
+                strokeDasharray="4 2" fill="url(#gFeels)" dot={false} activeDot={{ r: 3, fill: "#60a5fa" }} animationDuration={700} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+        <div className={`flex gap-4 mt-2 ${legend}`}>
+          <span className="flex items-center gap-1.5 text-xs font-body">
+            <span className="w-3 h-0.5 bg-yellow-400 rounded inline-block" /> Temperature
+          </span>
+          <span className="flex items-center gap-1.5 text-xs font-body">
+            <span className="w-3 h-0.5 bg-blue-400 rounded inline-block" /> Feels Like
+          </span>
+        </div>
       </div>
     </div>
   );
