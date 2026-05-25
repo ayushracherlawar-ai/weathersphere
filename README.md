@@ -27,19 +27,35 @@ Built with React, Tailwind CSS, Recharts, Vite and Open-Meteo APIs, this project
 </p>
 
 
-# 🚀 Live Demo
+## 🚀 Live Demo
 
 > https://your-weather-app.vercel.app
 
-# 📸 Screenshots
-## Dashboard Page
-![Dashboard Screenshot](./src/assets/dashboard.png)
-## Weather condition
-![Weather Screenshot](./src/assets/weather.png)
-## Rainy 
-![Rain Screenshot](./src/assets/rain.png)
-## Lightmode Page
-![Lightmode Screenshot](./src/assets/lightmode.png)
+## 📸 Screenshots
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="./src/assets/dashboard.png" width="300"/>
+      <br><b>Dashboard</b>
+    </td>
+    <td align="center">
+      <img src="./src/assets/weather.png" width="300"/>
+      <br><b>Weather Condition</b>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center">
+      <img src="./src/assets/rain.png" width="300"/>
+      <br><b>Rainy Weather</b>
+    </td>
+    <td align="center">
+      <img src="./src/assets/lightmode.png" width="300"/>
+      <br><b>Light Mode</b>
+    </td>
+  </tr>
+</table>
 
 
 # ✨ Features
