@@ -27,9 +27,9 @@ Built with React, Tailwind CSS, Recharts, Vite and Open-Meteo APIs, this project
 </p>
 
 
-## 🚀 Live Demo
+<!-- ## 🚀 Live Demo
 
-> https://your-weather-app.vercel.app
+> https://your-weather-app.vercel.app -->
 
 ## 📸 Screenshots
 
